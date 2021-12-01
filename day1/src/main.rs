@@ -22,18 +22,19 @@ fn part_one(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let f = File::open(input_path)?;
     let reader = BufReader::new(f);
     let mut lines = reader.lines().peekable();
-
-    let mut difference = Vec::new();
+    let mut count = 0;
 
     while let Some(line) = lines.next() {
         let parsed_line: i64 = line?.parse()?;
         if let Some(next_line) = lines.peek() {
             let parsed_next_line: i64 = next_line.as_ref().expect("is valid").parse()?;
-            difference.push(parsed_next_line - parsed_line)
+            if parsed_next_line > parsed_line {
+                count += 1
+            }
         }
     }
 
-    Ok(difference.iter().filter(|x| x.is_positive()).count())
+    Ok(count)
 }
 
 fn part_two(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
@@ -43,15 +44,17 @@ fn part_two(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
     // we skip the first two because these contain zeroes
     let windows = WindowMaker::new(Box::new(reader.lines())).skip(2);
     let mut windows = windows.peekable();
-    let mut difference = Vec::new();
+    let mut count = 0;
 
     while let Some(parsed_line) = windows.next() {
         if let Some(parsed_next_line) = windows.peek() {
-            difference.push(parsed_next_line - parsed_line)
+            if parsed_next_line > &parsed_line {
+                count += 1
+            }
         }
     }
 
-    Ok(difference.iter().filter(|x| x.is_positive()).count())
+    Ok(count)
 }
 
 pub struct Window(i64, i64, i64);
@@ -106,7 +109,6 @@ impl<'a> Iterator for WindowMaker<'a> {
         }
     }
 }
-
 
 #[test]
 fn day1_one() {
