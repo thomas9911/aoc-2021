@@ -1,8 +1,17 @@
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
+use std::path::Path;
+
+fn fetch_file_path() -> &'static str {
+    if Path::new("src/input.txt").exists() {
+        "src/input.txt"
+    } else {
+        "day1/src/input.txt"
+    }
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let input_file = "src/input.txt";
+    let input_file = fetch_file_path();
     println!("part one: {}", part_one(input_file)?);
     println!("part two: {}", part_two(input_file)?);
 
@@ -96,4 +105,15 @@ impl<'a> Iterator for WindowMaker<'a> {
             None
         }
     }
+}
+
+
+#[test]
+fn day1_one() {
+    assert_eq!(1559, part_one(fetch_file_path()).unwrap())
+}
+
+#[test]
+fn day1_two() {
+    assert_eq!(1600, part_two(fetch_file_path()).unwrap())
 }
