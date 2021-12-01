@@ -18,17 +18,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn parse_line(line: Result<String, io::Error>) -> Result<i64, String> {
+    line.map_err(|e| e.to_string())?
+        .parse::<i64>()
+        .map_err(|e| e.to_string())
+}
+
+fn into_error<'a>(result: &'a Result<i64, String>) -> Result<&'a i64, String> {
+    match result {
+        Ok(x) => Ok(x),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 fn part_one(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let f = File::open(input_path)?;
     let reader = BufReader::new(f);
-    let mut lines = reader.lines().peekable();
+    let mut lines = reader.lines().map(parse_line).peekable();
     let mut count = 0;
 
     while let Some(line) = lines.next() {
-        let parsed_line: i64 = line?.parse()?;
+        let parsed_line: i64 = line?;
         if let Some(next_line) = lines.peek() {
-            let parsed_next_line: i64 = next_line.as_ref().expect("is valid").parse()?;
-            if parsed_next_line > parsed_line {
+            let parsed_next_line = into_error(next_line)?;
+            if parsed_next_line > &parsed_line {
                 count += 1
             }
         }
