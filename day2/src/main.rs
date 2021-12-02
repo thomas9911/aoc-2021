@@ -128,10 +128,10 @@ fn line_iterator() -> Result<Box<dyn Iterator<Item = LineItem>>, Box<dyn std::er
 
 #[test]
 fn part_one() {
-    assert_eq!(Ok(1868935), parts(true))
+    assert_eq!(1868935, parts(true).unwrap())
 }
 
 #[test]
 fn part_two() {
-    assert_eq!(Ok(1965970888), parts(false))
+    assert_eq!(1965970888, parts(false).unwrap())
 }
