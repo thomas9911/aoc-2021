@@ -36,7 +36,6 @@ fn part_two(path: &str) -> Result<usize, Box<dyn std::error::Error>> {
     Ok(bingo.play_losing())
 }
 
-
 #[test]
 fn day3_one() {
     assert_eq!(46920, part_one(fetch_file_path()).unwrap())
