@@ -40,7 +40,8 @@ impl FromStr for Bingo {
                 .try_fold(Vec::new(), |mut acc, x| {
                     acc.push(x.parse()?);
                     Ok(acc)
-                }).map_err(|e: NumberParseError| e.to_string())?,
+                })
+                .map_err(|e: NumberParseError| e.to_string())?,
             boards,
         })
     }
