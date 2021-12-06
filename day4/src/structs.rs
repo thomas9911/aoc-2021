@@ -1,5 +1,6 @@
 use crate::Number;
 use derive_more::{Deref, DerefMut};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 pub struct Bingo {
@@ -7,7 +8,7 @@ pub struct Bingo {
     pub boards: Vec<Board>,
 }
 
-impl std::str::FromStr for Bingo {
+impl FromStr for Bingo {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Bingo, Self::Err> {
@@ -34,8 +35,10 @@ impl std::str::FromStr for Bingo {
         Ok(Bingo {
             random_numbers: random_numbers_txt
                 .split(',')
-                .map(|x| x.parse().expect("random number is not a number"))
-                .collect(),
+                .try_fold::<_, _, Result<_, String>>(Vec::new(), |mut acc, x| {
+                    acc.push(x.parse().map_err(|e: <Number as FromStr>::Err| e.to_string())?);
+                    Ok(acc)
+                })?,
             boards,
         })
     }
@@ -152,7 +155,7 @@ impl Board {
     }
 }
 
-impl std::str::FromStr for Board {
+impl FromStr for Board {
     type Err = std::num::ParseIntError;
 
     fn from_str(s: &str) -> Result<Board, Self::Err> {
@@ -187,8 +190,6 @@ impl Cell {
 
 #[test]
 fn test_parsed_input() {
-    use std::str::FromStr;
-
     let input = r#"7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
@@ -225,8 +226,6 @@ fn test_parsed_input() {
 
 #[test]
 fn from_str_test() {
-    use std::str::FromStr;
-
     let input = r#"
 22 13 17 11  0
  8  2 23  4 24
