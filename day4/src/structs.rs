@@ -37,10 +37,10 @@ impl FromStr for Bingo {
         Ok(Bingo {
             random_numbers: random_numbers_txt
                 .split(',')
-                .try_fold::<_, _, Result<_, String>>(Vec::new(), |mut acc, x| {
-                    acc.push(x.parse().map_err(|e: NumberParseError| e.to_string())?);
+                .try_fold(Vec::new(), |mut acc, x| {
+                    acc.push(x.parse()?);
                     Ok(acc)
-                })?,
+                }).map_err(|e: NumberParseError| e.to_string())?,
             boards,
         })
     }
