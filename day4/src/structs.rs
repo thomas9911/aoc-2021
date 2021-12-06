@@ -2,6 +2,8 @@ use crate::Number;
 use derive_more::{Deref, DerefMut};
 use std::str::FromStr;
 
+type NumberParseError = <Number as FromStr>::Err;
+
 #[derive(Debug, PartialEq)]
 pub struct Bingo {
     pub random_numbers: Vec<Number>,
@@ -36,7 +38,7 @@ impl FromStr for Bingo {
             random_numbers: random_numbers_txt
                 .split(',')
                 .try_fold::<_, _, Result<_, String>>(Vec::new(), |mut acc, x| {
-                    acc.push(x.parse().map_err(|e: <Number as FromStr>::Err| e.to_string())?);
+                    acc.push(x.parse().map_err(|e: NumberParseError| e.to_string())?);
                     Ok(acc)
                 })?,
             boards,
@@ -156,7 +158,7 @@ impl Board {
 }
 
 impl FromStr for Board {
-    type Err = std::num::ParseIntError;
+    type Err = NumberParseError;
 
     fn from_str(s: &str) -> Result<Board, Self::Err> {
         let mut board = Board::init();
