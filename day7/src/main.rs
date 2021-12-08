@@ -37,6 +37,12 @@ impl Counter {
             0
         }
     }
+
+    pub fn score_with<F: Fn(&i64) -> i64>(&self, scoring_function: F) -> i64 {
+        self.iter()
+            .map(|(value, amount)| scoring_function(value) * amount)
+            .sum()
+    }
 }
 
 fn fetch_file_path() -> &'static str {
@@ -61,7 +67,7 @@ fn part_one(input_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
     let counter = Counter::from_bufreader(reader)?;
 
     let minimum = (0..counter.max())
-        .map(|y| score_at(&counter, |x| (x - y).abs()))
+        .map(|guess| counter.score_with(|x| (x - guess).abs()))
         .min()
         .unwrap_or(i64::MAX);
 
@@ -74,9 +80,9 @@ fn part_two(input_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
     let counter = Counter::from_bufreader(reader)?;
 
     let minimum = (0..counter.max())
-        .map(|y| {
-            score_at(&counter, |x| {
-                let difference = (x - y).abs();
+        .map(|guess| {
+            counter.score_with(|x| {
+                let difference = (x - guess).abs();
                 // using ye old sum formula here: (n+1)n/2
                 ((1 + difference) * difference) / 2
             })
@@ -85,13 +91,6 @@ fn part_two(input_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
         .unwrap_or(i64::MAX);
 
     Ok(minimum)
-}
-
-fn score_at<F: Fn(&i64) -> i64>(data: &BTreeMap<i64, i64>, scoring_function: F) -> i64 {
-    data.iter().fold(0i64, |mut acc, (value, amount)| {
-        acc += scoring_function(value) * amount;
-        acc
-    })
 }
 
 #[test]
