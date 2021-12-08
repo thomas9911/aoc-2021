@@ -31,7 +31,7 @@ impl Counter {
 
     pub fn max(&self) -> i64 {
         // BTreeMap's are sorted on key, so the maximum value should be at the end.
-        if let Some(max) = self.keys().rev().next() {
+        if let Some(max) = self.keys().next_back() {
             *max
         } else {
             0
