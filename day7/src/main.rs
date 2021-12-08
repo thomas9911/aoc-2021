@@ -28,6 +28,15 @@ impl Counter {
 
         Ok(Counter { data })
     }
+
+    pub fn max(&self) -> i64 {
+        // BTreeMap's are sorted on key, so the maximum value should be at the end.
+        if let Some(max) = self.keys().rev().next() {
+            *max
+        } else {
+            0
+        }
+    }
 }
 
 fn fetch_file_path() -> &'static str {
@@ -51,7 +60,7 @@ fn part_one(input_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
     let reader = BufReader::new(f);
     let counter = Counter::from_bufreader(reader)?;
 
-    let minimum = (0..500)
+    let minimum = (0..counter.max())
         .map(|y| score_at(&counter, |x| (x - y).abs()))
         .min()
         .unwrap_or(i64::MAX);
@@ -64,7 +73,7 @@ fn part_two(input_path: &str) -> Result<i64, Box<dyn std::error::Error>> {
     let reader = BufReader::new(f);
     let counter = Counter::from_bufreader(reader)?;
 
-    let minimum = (0..500)
+    let minimum = (0..counter.max())
         .map(|y| {
             score_at(&counter, |x| {
                 let difference = (x - y).abs();
