@@ -1,8 +1,8 @@
 use derive_more::{Deref, DerefMut, From};
+use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use std::convert::TryFrom;
 
 fn fetch_file_path() -> &'static str {
     if Path::new("src/input.txt").exists() {
@@ -34,11 +34,13 @@ impl Octopus {
     }
 }
 
-impl TryFrom<char>  for Octopus {
+impl TryFrom<char> for Octopus {
     type Error = String;
 
     fn try_from(ch: char) -> Result<Octopus, Self::Error> {
-        Ok(Octopus::from(ch.to_digit(10).ok_or(String::from("invalid digit"))? as u8))
+        Ok(Octopus::from(
+            ch.to_digit(10).ok_or(String::from("invalid digit"))? as u8,
+        ))
     }
 }
 
