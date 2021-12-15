@@ -247,7 +247,7 @@ fn day14_part_one_compact() {
 }
 
 #[test]
-fn day12_part_two() {
+fn day14_part_two() {
     assert_eq!(3390034818249, part_two(fetch_file_path()).unwrap())
 }
 
