@@ -1,23 +1,16 @@
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
 use std::fs::read_to_string;
-use std::ops::{Bound, RangeBounds, RangeInclusive};
+use std::ops::RangeInclusive;
 use std::path::Path;
 
 pub type Range = RangeInclusive<i32>;
 pub type Triple = (i32, i32, i32);
 
-fn bound_to_options(b: Bound<&i32>) -> Option<&i32> {
-    match b {
-        Bound::Included(x) => Some(x),
-        Bound::Excluded(x) => Some(x),
-        _ => None,
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub struct ReactorCore {
     blocks: Vec<Block>,
+    is_combined: bool,
 }
 
 impl ReactorCore {
@@ -27,11 +20,17 @@ impl ReactorCore {
             .lines()
             .map(Block::from_text)
             .collect::<Result<_, Box<dyn std::error::Error>>>()?;
-        Ok(ReactorCore { blocks })
+        Ok(ReactorCore {
+            blocks,
+            is_combined: false,
+        })
     }
 
     pub fn new(blocks: Vec<Block>) -> ReactorCore {
-        ReactorCore { blocks }
+        ReactorCore {
+            blocks,
+            is_combined: false,
+        }
     }
 
     pub fn on(&self, triple: &Triple) -> bool {
@@ -44,9 +43,97 @@ impl ReactorCore {
 
         point
     }
+
+    pub fn reject_blocks_not_in_range(&mut self, range: Range) {
+        let upper_bound = *range.end();
+        let lower_bound = *range.start();
+
+        self.blocks.retain(|block| {
+            if (block.range_x.end() < &lower_bound)
+                || (block.range_y.end() < &lower_bound)
+                || (block.range_z.end() < &lower_bound)
+            {
+                return false;
+            }
+
+            if (block.range_x.start() > &upper_bound)
+                || (block.range_y.start() > &upper_bound)
+                || (block.range_z.start() > &upper_bound)
+            {
+                return false;
+            }
+
+            true
+        });
+    }
+
+    pub fn combining(&mut self) {
+        // current block on:
+        // if on:
+        //    add intersect off
+        //    add block
+        // if off:
+        //    add intersect off
+
+        // current block off:
+        // if on:
+        //    add block
+        // if off:
+        //    add block
+
+        // reduced blocks contains blocks with on, and intersecting off blocks
+
+        let mut reduced_blocks: Vec<Block> = Vec::new();
+
+        for block in self.blocks.iter() {
+            for i in 0..reduced_blocks.len() {
+                let current_block = &reduced_blocks[i];
+                match (current_block.is_on, block.is_on) {
+                    (true, _) => {
+                        // subtract intersection
+                        reduced_blocks[i]
+                            .intersect(block, false)
+                            .map(|x| reduced_blocks.push(x));
+                    }
+                    (false, _) => {
+                        // add intersection, to counter the other off block
+                        reduced_blocks[i]
+                            .intersect(block, true)
+                            .map(|x| reduced_blocks.push(x));
+                    }
+                }
+            }
+            if block.is_on {
+                reduced_blocks.push(block.clone())
+            }
+        }
+
+        self.is_combined = true;
+        self.blocks = reduced_blocks;
+    }
+
+    pub fn count_on_cubes(&self) -> usize {
+        if !self.is_combined {
+            return 0;
+        }
+
+        let mut count: i64 = 0;
+        for block in self.blocks.iter() {
+            if block.is_on {
+                count += block.volume()
+            } else {
+                count -= block.volume()
+            }
+        }
+
+        if count < 0 {
+            panic!("invalid volume")
+        }
+        count as usize
+    }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Block {
     range_x: Range,
     range_y: Range,
@@ -119,6 +206,41 @@ impl Block {
             Err("invalid range".into())
         }
     }
+
+    pub fn volume(&self) -> i64 {
+        // why do I need to do +1 here ?!
+        (self.range_x.end() - self.range_x.start() + 1) as i64
+            * (self.range_y.end() - self.range_y.start() + 1) as i64
+            * (self.range_z.end() - self.range_z.start() + 1) as i64
+    }
+
+    pub fn intersect(&self, other: &Block, is_on: bool) -> Option<Block> {
+        let mut coordinates = [
+            (&self.range_x, &other.range_x),
+            (&self.range_y, &other.range_y),
+            (&self.range_z, &other.range_z),
+        ]
+        .into_iter()
+        .map(|(left, right)| {
+            let left_start = left.start();
+            let left_end = left.end();
+            let right_start = right.start();
+            let right_end = right.end();
+            let new_start = left_start.max(right_start);
+            let new_end = left_end.min(right_end);
+            if new_start <= new_end {
+                Some(*new_start..=*new_end)
+            } else {
+                None
+            }
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+        let z = coordinates.remove(2);
+        let y = coordinates.remove(1);
+        let x = coordinates.remove(0);
+        Some(Block::new(x, y, z, is_on))
+    }
 }
 
 fn fetch_file_path() -> &'static str {
@@ -129,37 +251,25 @@ fn fetch_file_path() -> &'static str {
     }
 }
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // finished but with too much help from reddit
     let input_file = fetch_file_path();
-    println!("part one: {:?}", part_one(input_file)?);
+    println!("part one: {:?}", part_one(input_file, false)?);
+    println!("part one combined: {:?}", part_one(input_file, true)?);
     println!("part two: {:?}", part_two(input_file)?);
 
     Ok(())
 }
 
-fn part_one(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
+fn part_one(input_path: &str, combined: bool) -> Result<usize, Box<dyn std::error::Error>> {
     let data = read_to_string(input_path)?;
     let mut core = ReactorCore::from_text(&data)?;
 
+    if combined {
+        core.combining();
+    }
+
     // remove blocks we dont care about
-    core.blocks.retain(|block| {
-        let upper_bound = 50;
-        let lower_bound = -50;
-        if (bound_to_options(block.range_x.end_bound()).unwrap() < &lower_bound)
-            || (bound_to_options(block.range_y.end_bound()).unwrap() < &lower_bound)
-            || (bound_to_options(block.range_z.end_bound()).unwrap() < &lower_bound)
-        {
-            return false;
-        }
-
-        if (bound_to_options(block.range_x.start_bound()).unwrap() > &upper_bound)
-            || (bound_to_options(block.range_y.start_bound()).unwrap() > &upper_bound)
-            || (bound_to_options(block.range_z.start_bound()).unwrap() > &upper_bound)
-        {
-            return false;
-        }
-
-        true
-    });
+    core.reject_blocks_not_in_range(-50..=50);
 
     // this can perfectly be done in parallel
     let range3d = (-50..=50).into_par_iter().flat_map(|i| {
@@ -167,21 +277,29 @@ fn part_one(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
             .into_par_iter()
             .flat_map(move |j| (-50..=50).into_par_iter().map(move |k| (i, j, k)))
     });
-    let counter = range3d.filter(|x| core.on(x)).count();
-
-    Ok(counter)
+    Ok(range3d.filter(|x| core.on(x)).count())
 }
 
 fn part_two(input_path: &str) -> Result<usize, Box<dyn std::error::Error>> {
     let data = read_to_string(input_path)?;
-    let _core = ReactorCore::from_text(&data)?;
+    let mut core = ReactorCore::from_text(&data)?;
+    core.combining();
 
-    Ok(usize::MAX)
+    let count = core.count_on_cubes();
+
+    Ok(count)
 }
 
 #[test]
 fn day_22_part_one() {
-    assert_eq!(658691, part_one(fetch_file_path()).unwrap())
+    assert_eq!(658691, part_one(fetch_file_path(), false).unwrap())
+}
+
+// only fast enough to get if you run in release mode
+#[cfg(not(debug_assertions))]
+#[test]
+fn day_22_part_two() {
+    assert_eq!(1228699515783640, part_two(fetch_file_path()).unwrap())
 }
 
 #[test]
@@ -238,4 +356,31 @@ fn block_on_test() {
     assert!(normal_block.on(&(9, 10, 9)));
     assert!(normal_block.on(&(9, 9, 11)));
     assert!(!normal_block.on(&(18, 9, 9)));
+}
+
+#[test]
+fn intersect_test() {
+    let a = Block::new(10..=12, 10..=12, 10..=12, true);
+    let b = Block::new(11..=13, 11..=13, 11..=13, true);
+
+    let x = a.intersect(&b, false).unwrap();
+
+    assert_eq!(
+        Block {
+            range_x: 11..=12,
+            range_y: 11..=12,
+            range_z: 11..=12,
+            is_on: false,
+        },
+        x
+    )
+}
+
+#[test]
+fn volume_test() {
+    let a = Block::new(10..=12, 10..=13, 11..=14, true);
+    let b = Block::new(-10..=-7, 10..=13, 11..=14, true);
+
+    assert_eq!(a.volume(), 3 * 4 * 4);
+    assert_eq!(b.volume(), 4 * 4 * 4);
 }

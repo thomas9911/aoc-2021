@@ -369,7 +369,7 @@ fn day15_part_one() {
 }
 
 // only possible to get if you run in release mode
-#[ignore]
+#[cfg(not(debug_assertions))]
 #[test]
 fn day15_part_two() {
     assert_eq!(2872, part_two(fetch_file_path()).unwrap())
