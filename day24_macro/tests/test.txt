@@ -1,0 +1,11 @@
+inp w
+add z 10
+add x z
+mod x 4
+div z 1
+add x 13
+eql x w
+add x w
+add z x
+inp w
+add z w

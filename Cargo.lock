@@ -125,6 +125,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "day24"
+version = "0.1.0"
+dependencies = [
+ "day24_macro",
+ "day24_shared",
+ "itertools",
+ "strum",
+]
+
+[[package]]
+name = "day24_macro"
+version = "0.1.0"
+dependencies = [
+ "day24_shared",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "day24_shared"
+version = "0.1.0"
+dependencies = [
+ "strum",
+]
+
+[[package]]
 name = "day3"
 version = "0.1.0"
 
@@ -204,6 +231,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "itertools"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3"
+dependencies = [
+ "either",
 ]
 
 [[package]]

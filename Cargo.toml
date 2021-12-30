@@ -20,4 +20,7 @@ members = [
     # "day18",
     "day22",
     "day23",
+    "day24",
+    "day24_macro",
+    "day24_shared",
 ]
