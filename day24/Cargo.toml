@@ -9,4 +9,3 @@ edition = "2021"
 strum = { version = "0.23", features = ["derive"] }
 day24_shared = {path = "../day24_shared"}
 day24_macro = {path = "../day24_macro"}
-itertools = "0.10"
