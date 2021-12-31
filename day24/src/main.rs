@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use day24_macro::AluProgram;
+use std::collections::BTreeMap;
 
 pub mod dynamic;
 
@@ -37,14 +37,20 @@ fn parts(forward: bool) -> Result<usize, Box<dyn std::error::Error>> {
             }
         }
         set = new_set.into_iter().take(N).collect();
-        if i == till - 1{
+        if i == till - 1 {
             if set.keys().next() == Some(&0) {
                 found = true
             }
         }
 
         if found {
-            let monad: Vec<_> = set.values().next().expect("this exists").into_iter().map(|x| x.to_string()).collect();
+            let monad: Vec<_> = set
+                .values()
+                .next()
+                .expect("this exists")
+                .into_iter()
+                .map(|x| x.to_string())
+                .collect();
             code = Some(monad.join("").parse()?)
         }
     }
@@ -56,7 +62,7 @@ fn parts(forward: bool) -> Result<usize, Box<dyn std::error::Error>> {
     }
 }
 
-fn range(forward: bool) -> Box<dyn Iterator<Item=i64>> {
+fn range(forward: bool) -> Box<dyn Iterator<Item = i64>> {
     if forward {
         Box::new(1..10)
     } else {
@@ -69,11 +75,11 @@ fn range(forward: bool) -> Box<dyn Iterator<Item=i64>> {
 // 12934998949199
 
 #[test]
-fn day24_part_one(){
+fn day24_part_one() {
     assert_eq!(12934998949199, parts(true).unwrap());
 }
 
 #[test]
-fn day24_part_two(){
+fn day24_part_two() {
     assert_eq!(11711691612189, parts(false).unwrap());
 }

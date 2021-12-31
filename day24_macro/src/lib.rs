@@ -100,11 +100,13 @@ fn impl_macro(
         instructions_functions.push(calculate)
     }
 
-    let lines: Vec<_> = (0..instructions_functions.len()).map(|i| {
-        let func_name = Ident::new(&format!("calculate_{}", i), Span::call_site());
-        quote!{ #i => Self::#func_name(a, b), }
-    }).collect();
-    let global_func = quote!{
+    let lines: Vec<_> = (0..instructions_functions.len())
+        .map(|i| {
+            let func_name = Ident::new(&format!("calculate_{}", i), Span::call_site());
+            quote! { #i => Self::#func_name(a, b), }
+        })
+        .collect();
+    let global_func = quote! {
         pub fn calculate_n(i: usize, a: i64, b: i64) -> i64 {
             match i {
                 #(#lines)*

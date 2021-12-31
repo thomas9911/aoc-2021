@@ -1,6 +1,6 @@
+use day24_shared::{Instruction, Item, Variable};
 use std::collections::BTreeMap;
 use std::io::BufRead;
-use day24_shared::{Instruction, Item, Variable};
 
 #[derive(Debug, Default)]
 pub struct Context {
@@ -93,7 +93,6 @@ impl Context {
         Ok(())
     }
 }
-
 
 #[test]
 fn binary_example_9() {
